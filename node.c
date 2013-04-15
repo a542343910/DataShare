@@ -6,13 +6,19 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <pthread.h>
+#include <mhash.h>
 
 #define NODE_LISTEN_ADDRESS INADDR_ANY
 #define NODE_LISTEN_PORT 4444
 #define NODE_LISTEN_QUEUE 300
 #define NODE_MAX_THREADS_COUNT 300
 
+#define NODE_KEY "12345678901234567890123456789011"
+#define WRITE_KEY "12345678901234567890123456789012"
+#define READ_KEY "12345678901234567890123456789013"
+
 typedef struct client_t {
+	unsigned char privileges;
 	int socket;
 	pthread_t thread;
 	struct sockaddr_in address;
@@ -65,11 +71,101 @@ void signal_handler( int signal ) {
 	};
 };
 
+unsigned char compare( char *this, char *that, unsigned char length ) {
+	unsigned char i = 0;
+	for( ; i < length; i++ ) {
+		if( this[i] != that[i] ) {
+			return 0;
+		};
+	};
+	return i == length;
+};
+
+unsigned char auth( client_t *client ) {
+	
+	client->privileges = 0;
+	
+	char challenge[32];
+	
+	if( 32 != recv( client->socket, &challenge, 32, 0 ) ) {
+		client->privileges = 0;
+		return client->privileges;
+	};
+	
+	char response[32];
+	
+	MHASH sha256 = mhash_hmac_init( MHASH_SHA256, NODE_KEY, 32, mhash_get_hash_pblock(MHASH_SHA256) );
+	mhash(sha256, challenge, 32);
+	mhash_deinit(sha256, response);
+	
+	if( 32 != send( client->socket, response, 32, 0 ) ) {
+		client->privileges = 0;
+		return client->privileges;
+	};
+	
+	unsigned char i = 0;
+	
+	for( ; i <= 32; i++ ) {
+		challenge[i] = rand() % 255;
+	};
+	
+	if( 32 != send( client->socket, challenge, 32, 0 ) ) {
+		client->privileges = 0;
+		return client->privileges;
+	};
+	
+	if( 32 != recv( client->socket, &response, 32, 0 ) ) {
+		client->privileges = 0;
+		return client->privileges;
+	};
+	
+	char buffer[32];
+	
+	sha256 = mhash_hmac_init( MHASH_SHA256, NODE_KEY, 32, mhash_get_hash_pblock(MHASH_SHA256) );
+	mhash(sha256, challenge, 32);
+	mhash_deinit(sha256, buffer);
+	
+	if( compare( buffer, response, 32 ) ) {
+		// client is NODE
+		client->privileges = 3;
+		return client->privileges;
+	};
+	
+	sha256 = mhash_hmac_init( MHASH_SHA256, WRITE_KEY, 32, mhash_get_hash_pblock(MHASH_SHA256) );
+	mhash(sha256, challenge, 32);
+	mhash_deinit(sha256, buffer);
+	
+	if( compare( buffer, response, 32 ) ) {
+		// client may WRITE
+		client->privileges = 2;
+		return client->privileges;
+	};
+	
+	sha256 = mhash_hmac_init( MHASH_SHA256, READ_KEY, 32, mhash_get_hash_pblock(MHASH_SHA256) );
+	mhash(sha256, challenge, 32);
+	mhash_deinit(sha256, buffer);
+	
+	if( compare( buffer, response, 32 ) ) {
+		// client may READ
+		client->privileges = 1;
+		return client->privileges;
+	};
+	
+	// client has no correct keys, should be rejected
+	return client->privileges;
+	
+};
+
 void *client_connection( void *client_pointer ) {
+	
 	client_t *client = ( client_t * ) client_pointer;
 	
+	if( auth(client) ) {
+		printf( "Client %u, thread %u: access granted, level %u\n", client->socket, (int) client->thread, client->privileges );
+		// process commands
+	};
 	
-	
+	printf( "Client %u, thread %u: access denied, no correct keys\n", client->socket, (int) client->thread );
 	
 	if( -1 == close( client->socket ) ) {
 		perror("Failed to close client socket (end of thread)");
@@ -81,6 +177,7 @@ void *client_connection( void *client_pointer ) {
 	threads_count_add(-1);
 	
 	return client_pointer;
+	
 };
 
 int main( int argc, char *argv[], char *env[] ) {
