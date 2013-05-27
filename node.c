@@ -18,6 +18,15 @@
 #define NODE_MIN_KEY_LENGTH 32
 #define NODE_MAX_KEY_LENGTH 256
 
+#define NODE_CHALLENGE_MIN_LENGTH 32
+#define NODE_CHALLENGE_MAX_LENGTH 255
+
+#define NODE_HASH_LENGTH 64
+
+#define NODE_CONNECTION_READONLY  1
+#define NODE_CONNECTION_READWRITE 2
+#define NODE_CONNECTION_NODE      3
+
 /*
  * Authorization:
  * - when client connected, send CHALLENGE (random string)
@@ -266,6 +275,55 @@ int get_connection_type( node_t *node, int socket ) {
 	
 };
 
+int set_connection_type( node_t *node, int socket, int type ) {
+	
+	
+	if( 0 == node ) {
+		fprintf( stderr, "set_connection_type: node == 0" );
+		return 0;
+	};
+	
+	if( -1 == socket ) {
+		fprintf( stderr, "set_connection_type: socket == -1" );
+		return 0;
+	};
+	
+	if( 0 == node->connection_mutex ) {
+		fprintf( stderr, "get_connection_type: node->connection_mutex == 0" );
+		return 0;
+	};
+	
+	if( 0 != pthread_mutex_lock( node->connection_mutex ) ) {
+		perror( "Failed to lock connection mutex while setting connection type" );
+		return -1;
+	};
+	
+	if( 0 == node->connection ) {
+		return 0;
+	};
+	
+	connection_t *current = node->connection->right;
+	
+	do {
+		
+		if( current->socket == socket ) {
+			current->type = type;
+			break;
+		};
+		
+		current = current->right;
+		
+	} while( current != node->connection );
+	
+	if( 0 != pthread_mutex_unlock( node->connection_mutex ) ) {
+		perror( "Failed to unlock connection mutex while setting connection type" );
+		return -1;
+	};
+	
+	return 0;
+	
+};
+
 int destroy_events( node_t *node, int socket ) {
 	
 	if( 0 == node ) {
@@ -386,6 +444,10 @@ int destroy_connection( node_t *node, int socket ) {
 	
 	if( 0 != pthread_mutex_unlock( node->connection_mutex ) ) {
 		perror( "Failed to unlock connection mutex while destroying connection" );
+		return -2;
+	};
+	
+	if( -1 == destroy_events( node, socket ) ) {
 		return -2;
 	};
 	
@@ -640,6 +702,117 @@ pthread_t *init_workers( int count, void *( worker_routine )( void * ), node_t *
 	
 };
 
+unsigned char compare( char *this, char *that, unsigned int length ) {
+	unsigned int i = 0;
+	for( ; i < length; i++ ) {
+		if( this[i] ^ that[i] ) {
+			return 0;
+		};
+	};
+	return 1;
+};
+
+void client_authentification( node_t *node, event_t *event ) {
+	
+	if( 0 == node ) {
+		fprintf( stderr, "client_authentification: node == 0" );
+		return;
+	};
+	
+	if( 0 == event ) {
+		fprintf( stderr, "client_authentification: event == 0" );
+		return;
+	};
+	
+	unsigned char challenge_length = NODE_CHALLENGE_MIN_LENGTH + rand() % ( NODE_CHALLENGE_MAX_LENGTH - NODE_CHALLENGE_MIN_LENGTH );
+	
+	unsigned char *challenge = malloc( challenge_length );
+	
+	if( 0 == challenge ) {
+		perror( "Failed to allocate memory for client challenge" );
+		return;
+	};
+	
+	unsigned char i = 0;
+	
+	for( ; i < challenge_length; i++ ) {
+		challenge[i] = rand() % 255;
+	};
+	
+	if( -1 == send( event->socket, &challenge_length, 1, 0 ) ) {
+		destroy_connection( node, event->socket );
+		return;
+	};
+	
+	if( -1 == send( event->socket, challenge, challenge_length, 0 ) ) {
+		destroy_connection( node, event->socket );
+		return;
+	};
+	
+	char response[NODE_HASH_LENGTH];
+	
+	if( -1 == recv( event->socket, response, NODE_HASH_LENGTH, 0 ) ) {
+		destroy_connection( node, event->socket );
+		return;
+	};
+	
+	MHASH hasher;
+	
+	char expected[NODE_HASH_LENGTH];
+	char connection_type;
+	
+	hasher = mhash_hmac_init( MHASH_SHA512, node->read_key, node->read_key_length, mhash_get_hash_pblock( MHASH_SHA512 ) );
+	mhash( hasher, challenge, challenge_length );
+	mhash_hmac_deinit( hasher, expected );
+	
+	if( compare( expected, response, NODE_HASH_LENGTH ) ) {
+		connection_type = NODE_CONNECTION_READONLY;
+		if( -1 == set_connection_type( node, event->socket, connection_type ) ) {
+			destroy_connection( node, event->socket );
+			return;
+		};
+		if( -1 == send( event->socket, &connection_type, 1, 0 ) ) {
+			destroy_connection( node, event->socket );
+			return;
+		};
+	};
+	
+	hasher = mhash_hmac_init( MHASH_SHA512, node->write_key, node->write_key_length, mhash_get_hash_pblock( MHASH_SHA512 ) );
+	mhash( hasher, challenge, challenge_length );
+	mhash_hmac_deinit( hasher, expected );
+	
+	if( compare( expected, response, NODE_HASH_LENGTH ) ) {
+		connection_type = NODE_CONNECTION_READWRITE;
+		if( -1 == set_connection_type( node, event->socket, connection_type ) ) {
+			destroy_connection( node, event->socket );
+			return;
+		};
+		if( -1 == send( event->socket, &connection_type, 1, 0 ) ) {
+			destroy_connection( node, event->socket );
+			return;
+		};
+	};
+	
+	hasher = mhash_hmac_init( MHASH_SHA512, node->node_key, node->node_key_length, mhash_get_hash_pblock( MHASH_SHA512 ) );
+	mhash( hasher, challenge, challenge_length );
+	mhash_hmac_deinit( hasher, expected );
+	
+	if( compare( expected, response, NODE_HASH_LENGTH ) ) {
+		connection_type = NODE_CONNECTION_NODE;
+		if( -1 == set_connection_type( node, event->socket, connection_type ) ) {
+			destroy_connection( node, event->socket );
+			return;
+		};
+		if( -1 == send( event->socket, &connection_type, 1, 0 ) ) {
+			destroy_connection( node, event->socket );
+			return;
+		};
+	};
+	
+	destroy_connection( node, event->socket );
+	
+};
+
 void *worker_routine( void *node_pointer ) {
 	
 	if( 0 == node_pointer ) {
@@ -664,11 +837,18 @@ void *worker_routine( void *node_pointer ) {
 			continue;
 		};
 		
-		//~ printf( "Worker, got event %u, connection type %i\n", (int) event, connection_type );
+		if( -1 == event->socket ) {
+			free( event );
+			continue;
+		};
 		
-		send( event->socket, "HTTP/1.1 200 OK\r\n\r\nOK", 21, 0 );
-		
-		destroy_connection( node, event->socket );
+		switch( event->type ) {
+			case 0: client_authentification( node, event ); break; // auth
+			
+			
+			
+			default: destroy_connection( node, event->socket );
+		};
 		
 		free( event );
 		
