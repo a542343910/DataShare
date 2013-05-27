@@ -5,15 +5,16 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <mhash.h>
+#include <string.h>
 
 #define NODE_DOMAIN  INADDR_ANY
-#define NODE_PORT    4444
+#define NODE_PORT    4448
 #define NODE_BACKLOG 300
 #define NODE_WORKERS 300
 
-#define NODE_READ_KEY  "012345678901234567890123456789001"
-#define NODE_WRITE_KEY "012345678901234567890123456789002"
-#define NODE_NODE_KEY  "012345678901234567890123456789003"
+#define NODE_READ_KEY  "01234567890123456789012345678901"
+#define NODE_WRITE_KEY "01234567890123456789012345678902"
+#define NODE_NODE_KEY  "01234567890123456789012345678903"
 
 #define NODE_MIN_KEY_LENGTH 32
 #define NODE_MAX_KEY_LENGTH 256
@@ -276,7 +277,6 @@ int get_connection_type( node_t *node, int socket ) {
 };
 
 int set_connection_type( node_t *node, int socket, int type ) {
-	
 	
 	if( 0 == node ) {
 		fprintf( stderr, "set_connection_type: node == 0" );
@@ -592,6 +592,10 @@ node_t *create_node( char *read_key, char *write_key, char *node_key ) {
 	node->write_key  = write_key;
 	node->node_key   = node_key;
 	
+	node->read_key_length   = read_key_length;
+	node->write_key_length  = write_key_length;
+	node->node_key_length   = node_key_length;
+	
 	return node;
 	
 };
@@ -736,7 +740,7 @@ char *socket_read( node_t *node, int socket, unsigned char length ) {
 		return 0;
 	};
 	
-	if( -1 == recv( socket, data, length, 0 ) ) {
+	if( length != recv( socket, data, length, 0 ) ) {
 		free( data );
 		destroy_connection( node, socket );
 		return 0;
@@ -768,7 +772,7 @@ int socket_write( node_t *node, int socket, char *data, unsigned char length ) {
 		return 0;
 	};
 	
-	if( -1 == send( socket, data, length, 0 ) ) {
+	if( length != send( socket, data, length, 0 ) ) {
 		destroy_connection( node, socket );
 		return -1;
 	};
@@ -801,6 +805,14 @@ char *create_challenge( unsigned char length ) {
 	
 };
 
+void hex_dump( char *data, unsigned int length ) {
+	unsigned int i = 0;
+	for( ; i < length; i++ ) {
+		printf( "%02X ", ( unsigned char ) data[i] );
+	};
+	printf( "\n" );
+};
+
 int authentification_finish( node_t *node, int socket, char *key, unsigned char key_length ) {
 	
 	if( 0 == node ) {
@@ -823,7 +835,16 @@ int authentification_finish( node_t *node, int socket, char *key, unsigned char 
 		return 0;
 	};
 	
-	unsigned int challenge_length = *socket_read( node, socket, 1 );
+	char *buffer = socket_read( node, socket, 1 );
+	
+	if( 0 == buffer ) {
+		destroy_connection( node, socket );
+		return 0;
+	};
+	
+	unsigned char challenge_length = ( unsigned char ) buffer[0];
+	
+	free( buffer );
 	
 	if( 0 == challenge_length ) {
 		return -1;
@@ -909,6 +930,8 @@ void client_authentification( node_t *node, event_t *event ) {
 			destroy_connection( node, event->socket );
 			return;
 		};
+		
+		return;
 		
 	};
 	
