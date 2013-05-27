@@ -712,101 +712,243 @@ unsigned char compare( char *this, char *that, unsigned int length ) {
 	return 1;
 };
 
+char *socket_read( node_t *node, int socket, unsigned char length ) {
+	
+	if( 0 == node ) {
+		fprintf( stderr, "socket_read: node == 0\n" );
+		return 0;
+	};
+	
+	if( -1 == socket ) {
+		fprintf( stderr, "socket_read: socket == -1\n" );
+		return 0;
+	};
+	
+	if( 0 == length ) {
+		fprintf( stderr, "socket_read: length == 0\n" );
+		return 0;
+	};
+	
+	char *data = malloc( length );
+	
+	if( 0 == data ) {
+		perror( "Failed to allocate memory for buffer while reading from socket" );
+		return 0;
+	};
+	
+	if( -1 == recv( socket, data, length, 0 ) ) {
+		free( data );
+		destroy_connection( node, socket );
+		return 0;
+	};
+	
+	return data;
+	
+};
+
+int socket_write( node_t *node, int socket, char *data, unsigned char length ) {
+	
+	if( 0 == node ) {
+		fprintf( stderr, "socket_write: node == 0\n" );
+		return 0;
+	};
+	
+	if( -1 == socket ) {
+		fprintf( stderr, "socket_write: socket == -1\n" );
+		return 0;
+	};
+	
+	if( 0 == data ) {
+		fprintf( stderr, "socket_write: data == 0\n" );
+		return 0;
+	};
+	
+	if( 0 == length ) {
+		fprintf( stderr, "socket_write: length == 0\n" );
+		return 0;
+	};
+	
+	if( -1 == send( socket, data, length, 0 ) ) {
+		destroy_connection( node, socket );
+		return -1;
+	};
+	
+	return 0;
+	
+};
+
+char *create_challenge( unsigned char length ) {
+	
+	if( 0 == length ) {
+		fprintf( stderr, "create_challenge: length == 0\n" );
+		return 0;
+	};
+	
+	char *challenge = malloc( length );
+	
+	if( 0 == challenge ) {
+		perror( "Failed to allocate memory for challenge" );
+		return 0;
+	};
+	
+	unsigned char i = 0;
+	
+	for( ; i < length; i++ ) {
+		challenge[i] = rand() % 255;
+	};
+	
+	return challenge;
+	
+};
+
+int authentification_finish( node_t *node, int socket, char *key, unsigned char key_length ) {
+	
+	if( 0 == node ) {
+		fprintf( stderr, "authentification_finish: node == 0\n" );
+		return 0;
+	};
+	
+	if( -1 == socket ) {
+		fprintf( stderr, "authentification_finish: socket == -1\n" );
+		return 0;
+	};
+	
+	if( 0 == key ) {
+		fprintf( stderr, "authentification_finish: key == 0\n" );
+		return 0;
+	};
+	
+	if( 0 == key_length ) {
+		fprintf( stderr, "authentification_finish: key_length == 0\n" );
+		return 0;
+	};
+	
+	unsigned int challenge_length = *socket_read( node, socket, 1 );
+	
+	if( 0 == challenge_length ) {
+		return -1;
+	};
+	
+	char *challenge = socket_read( node, socket, challenge_length);
+	
+	if( 0 == challenge ) {
+		return -1;
+	};
+	
+	MHASH hasher;
+	
+	char hash[NODE_HASH_LENGTH];
+	
+	hasher = mhash_hmac_init( MHASH_SHA512, key, key_length, mhash_get_hash_pblock( MHASH_SHA512 ) );
+	mhash( hasher, challenge, challenge_length );
+	mhash_hmac_deinit( hasher, hash );
+	
+	if( -1 == socket_write( node, socket, hash, NODE_HASH_LENGTH ) ) {
+		free( challenge );
+		return -1;
+	};
+	
+	return 0;
+	
+};
+
 void client_authentification( node_t *node, event_t *event ) {
 	
 	if( 0 == node ) {
-		fprintf( stderr, "client_authentification: node == 0" );
+		fprintf( stderr, "client_authentification: node == 0\n" );
 		return;
 	};
 	
 	if( 0 == event ) {
-		fprintf( stderr, "client_authentification: event == 0" );
+		fprintf( stderr, "client_authentification: event == 0\n" );
 		return;
 	};
 	
 	unsigned char challenge_length = NODE_CHALLENGE_MIN_LENGTH + rand() % ( NODE_CHALLENGE_MAX_LENGTH - NODE_CHALLENGE_MIN_LENGTH );
 	
-	unsigned char *challenge = malloc( challenge_length );
+	if( -1 == socket_write( node, event->socket, ( char * ) &challenge_length, 1 ) ) {
+		return;
+	};
+	
+	char *challenge = create_challenge( challenge_length );
 	
 	if( 0 == challenge ) {
-		perror( "Failed to allocate memory for client challenge" );
-		return;
-	};
-	
-	unsigned char i = 0;
-	
-	for( ; i < challenge_length; i++ ) {
-		challenge[i] = rand() % 255;
-	};
-	
-	if( -1 == send( event->socket, &challenge_length, 1, 0 ) ) {
 		destroy_connection( node, event->socket );
 		return;
 	};
 	
-	if( -1 == send( event->socket, challenge, challenge_length, 0 ) ) {
-		destroy_connection( node, event->socket );
+	if( -1 == socket_write( node, event->socket, challenge, challenge_length ) ) {
+		free( challenge );
 		return;
 	};
 	
-	char response[NODE_HASH_LENGTH];
+	char *response = socket_read( node, event->socket, NODE_HASH_LENGTH );
 	
-	if( -1 == recv( event->socket, response, NODE_HASH_LENGTH, 0 ) ) {
-		destroy_connection( node, event->socket );
+	if( 0 == response ) {
 		return;
 	};
+	
+	char buffer[NODE_HASH_LENGTH];
 	
 	MHASH hasher;
 	
-	char expected[NODE_HASH_LENGTH];
-	char connection_type;
-	
 	hasher = mhash_hmac_init( MHASH_SHA512, node->read_key, node->read_key_length, mhash_get_hash_pblock( MHASH_SHA512 ) );
 	mhash( hasher, challenge, challenge_length );
-	mhash_hmac_deinit( hasher, expected );
+	mhash_hmac_deinit( hasher, buffer );
 	
-	if( compare( expected, response, NODE_HASH_LENGTH ) ) {
-		connection_type = NODE_CONNECTION_READONLY;
-		if( -1 == set_connection_type( node, event->socket, connection_type ) ) {
+	if( compare( response, buffer, NODE_HASH_LENGTH ) ) {
+		
+		free( challenge );
+		free( response );
+		
+		if( -1 == authentification_finish( node, event->socket, node->read_key, node->read_key_length ) ) {
+			return;
+		};
+		
+		if( -1 == set_connection_type( node, event->socket, NODE_CONNECTION_READONLY ) ) {
 			destroy_connection( node, event->socket );
 			return;
 		};
-		if( -1 == send( event->socket, &connection_type, 1, 0 ) ) {
-			destroy_connection( node, event->socket );
-			return;
-		};
+		
 	};
 	
 	hasher = mhash_hmac_init( MHASH_SHA512, node->write_key, node->write_key_length, mhash_get_hash_pblock( MHASH_SHA512 ) );
 	mhash( hasher, challenge, challenge_length );
-	mhash_hmac_deinit( hasher, expected );
+	mhash_hmac_deinit( hasher, buffer );
 	
-	if( compare( expected, response, NODE_HASH_LENGTH ) ) {
-		connection_type = NODE_CONNECTION_READWRITE;
-		if( -1 == set_connection_type( node, event->socket, connection_type ) ) {
+	if( compare( response, buffer, NODE_HASH_LENGTH ) ) {
+		
+		free( challenge );
+		free( response );
+		
+		if( -1 == authentification_finish( node, event->socket, node->write_key, node->write_key_length ) ) {
+			return;
+		};
+		
+		if( -1 == set_connection_type( node, event->socket, NODE_CONNECTION_READWRITE ) ) {
 			destroy_connection( node, event->socket );
 			return;
 		};
-		if( -1 == send( event->socket, &connection_type, 1, 0 ) ) {
-			destroy_connection( node, event->socket );
-			return;
-		};
+		
 	};
-	
 	hasher = mhash_hmac_init( MHASH_SHA512, node->node_key, node->node_key_length, mhash_get_hash_pblock( MHASH_SHA512 ) );
 	mhash( hasher, challenge, challenge_length );
-	mhash_hmac_deinit( hasher, expected );
+	mhash_hmac_deinit( hasher, buffer );
 	
-	if( compare( expected, response, NODE_HASH_LENGTH ) ) {
-		connection_type = NODE_CONNECTION_NODE;
-		if( -1 == set_connection_type( node, event->socket, connection_type ) ) {
+	if( compare( response, buffer, NODE_HASH_LENGTH ) ) {
+		
+		free( challenge );
+		free( response );
+		
+		if( -1 == authentification_finish( node, event->socket, node->node_key, node->node_key_length ) ) {
+			return;
+		};
+		
+		if( -1 == set_connection_type( node, event->socket, NODE_CONNECTION_READWRITE ) ) {
 			destroy_connection( node, event->socket );
 			return;
 		};
-		if( -1 == send( event->socket, &connection_type, 1, 0 ) ) {
-			destroy_connection( node, event->socket );
-			return;
-		};
+		
 	};
 	
 	destroy_connection( node, event->socket );
@@ -896,7 +1038,6 @@ int main( int argc, char **argv, char **env ) {
 		event_t *event = create_event( client_socket, 0 );
 		
 		if( 0 == event ) {
-			destroy_events( node, client_socket );
 			destroy_connection( node, client_socket );
 			continue;
 		};
