@@ -16,7 +16,50 @@
 #define KEY_LENGTH 32
 #define HASH_LENGTH 64
 
+char *unpack_hash( char *hash ) {
+	
+	if( 0 == hash ) {
+		fprintf( stderr, "unpack_hash: hash == 0\n" );
+		return 0;
+	};
+	
+	char *hash_hex = malloc( HASH_LENGTH * 2  + 1 );
+	
+	if( 0 == hash_hex ) {
+		perror( "Failed to allocate memory for unpacked hash" );
+		return 0;
+	};
+	
+	hash_hex[ HASH_LENGTH * 2 ] = 0;
+	
+	unsigned int i = 0;
+	
+	for( ; i < HASH_LENGTH; i++ ) {
+		printf("%02X\n", (unsigned char) hash[i]);
+		sprintf( &hash_hex[ i * 2 ], "%02X", ( unsigned char ) hash[i] );
+	};
+	
+	return hash_hex;
+	
+};
+
 int main( int argc, char **argv, char **env ) {
+	
+	// TEST:
+	
+	//~ char tst[HASH_LENGTH];
+	//~ 
+	//~ int o = 0;
+	//~ 
+	//~ for( ; o < HASH_LENGTH; o++ ) {
+		//~ tst[o] = o;
+	//~ };
+	//~ 
+	//~ printf( "Unpacked hash: %s\n", unpack_hash(tst) );
+	//~ 
+	//~ abort();
+	
+	
 	
 	int node_socket = socket( AF_INET, SOCK_STREAM, 0 );
 	
