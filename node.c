@@ -831,6 +831,27 @@ void hex_dump( char *data, unsigned int length ) {
 	printf( "\n" );
 };
 
+void dispatch_read_command( node_t *node, int socket ) {
+	
+	if( 0 == node ) {
+		fprintf( stderr, "dispatch_read_command: node == 0\n" );
+		return;
+	};
+	
+	if( -1 == socket ) {
+		fprintf( stderr, "dispatch_read_command: socket == -1\n" );
+		return;
+	};
+	
+	event_t *event = create_event( socket, 5 );
+	
+	if( 0 != event ) {
+		enqueue_event( node, event );
+	};
+	
+};
+
+
 int authentification_finish( node_t *node, int socket, char *key, unsigned char key_length ) {
 	
 	if( 0 == node ) {
@@ -990,6 +1011,9 @@ void client_authentification( node_t *node, event_t *event ) {
 			return;
 		};
 		
+		dispatch_read_command( node, event->socket );
+		return;
+		
 	};
 	
 	destroy_connection( node, event->socket );
@@ -1104,17 +1128,19 @@ void client_get_chunk( node_t *node, event_t *event ) {
 		
 	};
 	
+	dispatch_read_command( node, event->socket );
+	
 };
 
 void client_put_chunk( node_t *node, event_t *event ) {
 	
 	if( 0 == node ) {
-		fprintf( stderr, "client_get_chunk: node == 0\n" );
+		fprintf( stderr, "client_put_chunk: node == 0\n" );
 		return;
 	};
 	
 	if( 0 == event ) {
-		fprintf( stderr, "client_get_chunk: event == 0\n" );
+		fprintf( stderr, "client_put_chunk: event == 0\n" );
 		return;
 	};
 	
@@ -1203,6 +1229,7 @@ void client_put_chunk( node_t *node, event_t *event ) {
 	
 	if( ! compare( real_chunk_hash, chunk_hash, NODE_HASH_LENGTH ) ) {
 		socket_write( node, event->socket, &status, 1 );
+		dispatch_read_command( node, event->socket );
 		return;
 	};
 	
@@ -1210,17 +1237,141 @@ void client_put_chunk( node_t *node, event_t *event ) {
 	
 	if( 1 != fwrite( chunk_contents, chunk_size, 1, chunk_file ) ) {
 		socket_write( node, event->socket, &status, 1 );
+		dispatch_read_command( node, event->socket );
 		return;
 	};
 	
 	if( -1 == fclose( chunk_file ) ) {
 		socket_write( node, event->socket, &status, 1 );
+		dispatch_read_command( node, event->socket );
 		return;
 	};
 	
 	status = 1;
 	
 	socket_write( node, event->socket, &status, 1 );
+	
+	dispatch_read_command( node, event->socket );
+	
+};
+
+void client_drop_chunk( node_t *node, event_t *event ) {
+	
+	if( 0 == node ) {
+		fprintf( stderr, "client_drop_chunk: node == 0\n" );
+		return;
+	};
+	
+	if( 0 == event ) {
+		fprintf( stderr, "client_drop_chunk: event == 0\n" );
+		return;
+	};
+	
+	if( NODE_CONNECTION_READWRITE > get_connection_type( node, event->socket ) ) {
+		destroy_connection( node, event->socket );
+		return;
+	};
+	
+	char *chunk_hash = socket_read( node, event->socket, NODE_HASH_LENGTH );
+	
+	if( 0 == chunk_hash ) {
+		return;
+	};
+	
+	char *chunk_hash_hex = unpack_hash( chunk_hash );
+	
+	char *chunk_path = strcat( NODE_DATA_PATH, chunk_hash_hex );
+	
+	unlink( chunk_path );
+	
+	dispatch_read_command( node, event->socket );
+	
+};
+
+void dispatch_get_chunk( node_t *node, int socket ) {
+	
+	if( 0 == node ) {
+		fprintf( stderr, "dispatch_get_chunk: node == 0\n" );
+		return;
+	};
+	
+	if( -1 == socket ) {
+		fprintf( stderr, "dispatch_get_chunk: socket == -1\n" );
+		return;
+	};
+	
+	event_t *event = create_event( socket, 2 );
+	
+	if( 0 != event ) {
+		enqueue_event( node, event );
+	};
+	
+};
+
+void dispatch_put_chunk( node_t *node, int socket ) {
+	
+	if( 0 == node ) {
+		fprintf( stderr, "dispatch_put_chunk: node == 0\n" );
+		return;
+	};
+	
+	if( -1 == socket ) {
+		fprintf( stderr, "dispatch_put_chunk: socket == -1\n" );
+		return;
+	};
+	
+	event_t *event = create_event( socket, 3 );
+	
+	if( 0 != event ) {
+		enqueue_event( node, event );
+	};
+	
+};
+
+void dispatch_drop_chunk( node_t *node, int socket ) {
+	
+	if( 0 == node ) {
+		fprintf( stderr, "dispatch_drop_chunk: node == 0\n" );
+		return;
+	};
+	
+	if( -1 == socket ) {
+		fprintf( stderr, "dispatch_drop_chunk: socket == -1\n" );
+		return;
+	};
+	
+	event_t *event = create_event( socket, 4 );
+	
+	if( 0 != event ) {
+		enqueue_event( node, event );
+	};
+	
+};
+
+void client_read_command( node_t *node, event_t *event ){
+	
+	if( 0 == node ) {
+		fprintf( stderr, "client_read_command: node == 0\n" );
+		return;
+	};
+	
+	if( 0 == event ) {
+		fprintf( stderr, "client_read_command: event == 0\n" );
+		return;
+	};
+	
+	char command[1];
+	
+	if( 1 == recv( event->socket, command, 1, 0 ) ) {
+		
+		switch( command[0] ) {
+			case 0: dispatch_get_chunk( node, event->socket ); break; // get chunk
+			case 1: dispatch_put_chunk( node, event->socket ); break; // put chunk
+			case 2: dispatch_drop_chunk( node, event->socket ); break; // drop chunk
+			default: destroy_connection( node, event->socket );
+		};
+		
+	};
 	
 };
 
@@ -1257,9 +1408,9 @@ void *worker_routine( void *node_pointer ) {
 			case 0: client_authentification( node, event ); break; // auth client-node
 			case 1: break; // auth node-node
 			case 2: client_get_chunk( node, event ); break; // give chunk to client
-			case 3: break; // put chunk
-			case 4: break; // drop chunk
-			
+			case 3: client_put_chunk( node, event ); break; // put chunk
+			case 4: client_drop_chunk( node, event ); break; // drop chunk
+			case 5: client_read_command( node, event ); break; // read command from client
 			default: destroy_connection( node, event->socket );
 		};
 		
