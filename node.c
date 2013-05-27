@@ -11,6 +11,30 @@
 #define NODE_BACKLOG 300
 #define NODE_WORKERS 300
 
+#define NODE_READ_KEY  "012345678901234567890123456789001"
+#define NODE_WRITE_KEY "012345678901234567890123456789002"
+#define NODE_NODE_KEY  "012345678901234567890123456789003"
+
+#define NODE_MIN_KEY_LENGTH 32
+#define NODE_MAX_KEY_LENGTH 256
+
+/*
+ * Authorization:
+ * - when client connected, send CHALLENGE (random string)
+ * - read RESPONSE[HASH_LENGTH]
+ * - if CHALLENGE+READ_KEY == RESPONSE
+ *     send read-only
+ * - if CHALLENGE+WRITE_KEY == RESPONSE
+ *     send read-write
+ * - if CHALLENGE+NODE_KEY == RESPONSE
+ *     send node-connection
+ * - else - destroy connection
+ * - read CLIENT_CHALLENGE
+ * - respond with CLIENT_CHALLENGE+CLIENT_KEY (READ/WRITE/NODE)
+ * - read access rights
+ * 
+ * */
+
 typedef struct connection_t {
 	int socket;
 	int type;
@@ -31,6 +55,16 @@ typedef struct node_t {
 	pthread_cond_t  *event_condition;
 	connection_t    *connection;
 	pthread_mutex_t *connection_mutex;
+	
+	char *read_key;
+	int   read_key_length;
+	
+	char *write_key;
+	int   write_key_length;
+	
+	char *node_key;
+	int   node_key_length;
+	
 } node_t;
 
 connection_t *create_connection( int socket, int type ) {
@@ -401,7 +435,56 @@ int add_connection( node_t *node, connection_t *connection ) {
 	
 };
 
-node_t *create_node() {
+node_t *create_node( char *read_key, char *write_key, char *node_key ) {
+	
+	if( 0 == read_key ) {
+		fprintf( stderr, "No read-key provided\n" );
+		return 0;
+	};
+	
+	if( 0 == write_key ) {
+		fprintf( stderr, "No write-key provided\n" );
+		return 0;
+	};
+	
+	if( 0 == node_key ) {
+		fprintf( stderr, "No node-key provided\n" );
+		return 0;
+	};
+	
+	int read_key_length  = strlen( read_key );
+	int write_key_length = strlen( write_key );
+	int node_key_length  = strlen( node_key );
+	
+	if( NODE_MIN_KEY_LENGTH > read_key_length ) {
+		fprintf( stderr, "Read key should be at least %i characters long", NODE_MIN_KEY_LENGTH );
+		return 0;
+	};
+	
+	if( NODE_MAX_KEY_LENGTH < read_key_length ) {
+		fprintf( stderr, "Read key should not be longer than %i characters", NODE_MAX_KEY_LENGTH );
+		return 0;
+	};
+	
+	if( NODE_MIN_KEY_LENGTH > write_key_length ) {
+		fprintf( stderr, "Write key should be at least %i characters long", NODE_MIN_KEY_LENGTH );
+		return 0;
+	};
+	
+	if( NODE_MAX_KEY_LENGTH < write_key_length ) {
+		fprintf( stderr, "Write key should not be longer than %i characters", NODE_MAX_KEY_LENGTH );
+		return 0;
+	};
+	
+	if( NODE_MIN_KEY_LENGTH > node_key_length ) {
+		fprintf( stderr, "Node key should be at least %i characters long", NODE_MIN_KEY_LENGTH );
+		return 0;
+	};
+	
+	if( NODE_MAX_KEY_LENGTH < node_key_length ) {
+		fprintf( stderr, "Node key should not be longer than %i characters", NODE_MAX_KEY_LENGTH );
+		return 0;
+	};
 	
 	node_t *node = malloc( sizeof( node_t ) );
 	
@@ -442,6 +525,10 @@ node_t *create_node() {
 	
 	node->event      = 0;
 	node->connection = 0;
+	
+	node->read_key   = read_key;
+	node->write_key  = write_key;
+	node->node_key   = node_key;
 	
 	return node;
 	
@@ -593,7 +680,7 @@ void *worker_routine( void *node_pointer ) {
 
 int main( int argc, char **argv, char **env ) {
 	
-	node_t *node = create_node();
+	node_t *node = create_node( NODE_READ_KEY, NODE_WRITE_KEY, NODE_NODE_KEY );
 	
 	if( 0 == node ) {
 		return 1;
@@ -635,10 +722,12 @@ int main( int argc, char **argv, char **env ) {
 		};
 		
 		if( -1 == add_connection( node, connection ) ) {
+			close( node_socket );
 			return 1;
 		};
 		
 		if( -1 == enqueue_event( node, event ) ) {
+			close( node_socket );
 			return 1;
 		};
 		
