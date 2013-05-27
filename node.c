@@ -17,6 +17,8 @@
 #define NODE_WRITE_KEY "01234567890123456789012345678902"
 #define NODE_NODE_KEY  "01234567890123456789012345678903"
 
+#define NODE_CLIENT_SOCKET_TIMEOUT 30
+
 #define NODE_MIN_KEY_LENGTH 32
 #define NODE_MAX_KEY_LENGTH 256
 
@@ -93,6 +95,19 @@ connection_t *create_connection( int socket, int type ) {
 		perror( "Failed to allocate memory while creating connection" );
 		close( socket );
 		return 0;
+	};
+	
+	struct timeval timeout;
+	
+	timeout.tv_sec  = NODE_CLIENT_SOCKET_TIMEOUT;
+	timeout.tv_usec = 0;
+	
+	if( -1 == setsockopt( socket, SOL_SOCKET, SO_RCVTIMEO, ( char * ) &timeout, sizeof( timeout ) ) ) {
+		perror( "Failed to set client socket read timeout" );
+	};
+	
+	if( -1 == setsockopt( socket, SOL_SOCKET, SO_SNDTIMEO, ( char * ) &timeout, sizeof( timeout ) ) ) {
+		perror( "Failed to set client socket write timeout" );
 	};
 	
 	connection->socket = socket;
@@ -1019,6 +1034,11 @@ void client_get_chunk( node_t *node, event_t *event ) {
 		return;
 	};
 	
+	if( NODE_CONNECTION_READONLY > get_connection_type( node, event->socket ) ) {
+		destroy_connection( node, event->socket );
+		return;
+	};
+	
 	char *chunk_hash = socket_read( node, event->socket, NODE_HASH_LENGTH );
 	
 	if( 0 == chunk_hash ) {
@@ -1070,6 +1090,11 @@ void client_get_chunk( node_t *node, event_t *event ) {
 		
 		unsigned char part_size = chunk_stat.st_size > 255 ? 255 : chunk_stat.st_size;
 		
+		if( -1 == socket_write( node, event->socket, ( char * ) &part_size, 1 ) ) {
+			free( chunk_contents );
+			return;
+		};
+		
 		if( -1 == socket_write( node, event->socket, &chunk_contents[chunk_given], part_size ) ) {
 			free( chunk_contents );
 			return;
@@ -1078,6 +1103,124 @@ void client_get_chunk( node_t *node, event_t *event ) {
 		chunk_given += part_size;
 		
 	};
+	
+};
+
+void client_put_chunk( node_t *node, event_t *event ) {
+	
+	if( 0 == node ) {
+		fprintf( stderr, "client_get_chunk: node == 0\n" );
+		return;
+	};
+	
+	if( 0 == event ) {
+		fprintf( stderr, "client_get_chunk: event == 0\n" );
+		return;
+	};
+	
+	if( NODE_CONNECTION_READWRITE > get_connection_type( node, event->socket ) ) {
+		destroy_connection( node, event->socket );
+		return;
+	};
+	
+	char *chunk_hash = socket_read( node, event->socket, NODE_HASH_LENGTH );
+	
+	if( 0 == chunk_hash ) {
+		return;
+	};
+	
+	char *chunk_hash_hex = unpack_hash( chunk_hash );
+	
+	if( 0 == chunk_hash_hex ) {
+		destroy_connection( node, event->socket );
+		return;
+	};
+	
+	char *chunk_path = strcat( NODE_DATA_PATH, chunk_hash_hex );
+	
+	struct stat chunk_stat;
+	
+	char chunk_exists = 0;
+	
+	if( -1 != stat( chunk_path, &chunk_stat ) ) {
+		socket_write( node, event->socket, &chunk_exists, 1 );
+		return;
+	} else {
+		if( -1 == socket_write( node, event->socket, &chunk_exists, 1 ) ) {
+			return;
+		};
+	};
+	
+	char *chunk_contents = 0;
+	unsigned int chunk_size = 0;
+	unsigned char part_size = 0;
+	
+	for( ; ; ) {
+		
+		char *buffer = socket_read( node, event->socket, 1 );
+		
+		if( 0 == buffer ) {
+			if( 0 != chunk_contents ) {
+				free( chunk_contents );
+			};
+			return;
+		};
+		
+		part_size = buffer[0];
+		
+		if( 0 == part_size ) {
+			break;
+		};
+		
+		chunk_contents = realloc( chunk_contents, chunk_size + part_size );
+		
+		free( buffer );
+		
+		buffer = socket_read( node, event->socket, part_size );
+		
+		if( 0 == buffer ) {
+			if( 0 != chunk_contents ) {
+				free( chunk_contents );
+			};
+			return;
+		};
+		
+		memcpy( &chunk_contents[chunk_size], buffer, part_size );
+		
+		free( buffer );
+		
+		chunk_size += part_size;
+		
+	};
+	
+	char real_chunk_hash[NODE_HASH_LENGTH];
+	
+	MHASH hasher = mhash_init( MHASH_SHA512 );
+	mhash( hasher, chunk_contents, chunk_size );
+	mhash_deinit( hasher, real_chunk_hash );
+	
+	char status = 0;
+	
+	if( ! compare( real_chunk_hash, chunk_hash, NODE_HASH_LENGTH ) ) {
+		socket_write( node, event->socket, &status, 1 );
+		return;
+	};
+	
+	FILE *chunk_file = fopen( chunk_path, "w" );
+	
+	if( 1 != fwrite( chunk_contents, chunk_size, 1, chunk_file ) ) {
+		socket_write( node, event->socket, &status, 1 );
+		return;
+	};
+	
+	if( -1 == fclose( chunk_file ) ) {
+		socket_write( node, event->socket, &status, 1 );
+		return;
+	};
+	
+	status = 1;
+	
+	socket_write( node, event->socket, &status, 1 );
 	
 };
 
@@ -1113,8 +1256,9 @@ void *worker_routine( void *node_pointer ) {
 		switch( event->type ) {
 			case 0: client_authentification( node, event ); break; // auth client-node
 			case 1: break; // auth node-node
-			case 2: client_get_chunk( node, event ); break;
-			
+			case 2: client_get_chunk( node, event ); break; // give chunk to client
+			case 3: break; // put chunk
+			case 4: break; // drop chunk
 			
 			default: destroy_connection( node, event->socket );
 		};
