@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.2" width="210mm" height="297mm" viewBox="0 0 21000 29700" preserveAspectRatio="xMidYMid" fill-rule="evenodd" clip-path="url(#presentation_clip_path)" stroke-width="28.222" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg" xmlns:ooo="http://xml.openoffice.org/svg/export" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve">
+ <defs class="ClipPathGroup">
+  <clipPath id="presentation_clip_path" clipPathUnits="userSpaceOnUse">
+   <rect x="0" y="0" width="21000" height="29700"/>
+  </clipPath>
+ </defs>
+ <defs class="TextShapeIndex">
+  <g ooo:slide="id1" ooo:id-list="id3 id4 id5 id6 id7 id8 id9 id10 id11 id12 id13 id14 id15 id16 id17 id18 id19 id20 id21 id22"/>
+ </defs>
+ <defs class="EmbeddedBulletChars">
+  <g id="bullet-char-template(57356)" transform="scale(0.00048828125,-0.00048828125)">
+   <path d="M 580,1141 L 1163,571 580,0 -4,571 580,1141 Z"/>
+  </g>
+  <g id="bullet-char-template(57354)" transform="scale(0.00048828125,-0.00048828125)">
+   <path d="M 8,1128 L 1137,1128 1137,0 8,0 8,1128 Z"/>
+  </g>
+  <g id="bullet-char-template(10146)" transform="scale(0.00048828125,-0.00048828125)">
+   <path d="M 174,0 L 602,739 174,1481 1456,739 174,0 Z M 1358,739 L 309,1346 659,739 1358,739 Z"/>
+  </g>
+  <g id="bullet-char-template(10132)" transform="scale(0.00048828125,-0.00048828125)">
+   <path d="M 2015,739 L 1276,0 717,0 1260,543 174,543 174,936 1260,936 717,1481 1274,1481 2015,739 Z"/>
+  </g>
+  <g id="bullet-char-template(10007)" transform="scale(0.00048828125,-0.00048828125)">
+   <path d="M 0,-2 C -7,14 -16,27 -25,37 L 356,567 C 262,823 215,952 215,954 215,979 228,992 255,992 264,992 276,990 289,987 310,991 331,999 354,1012 L 381,999 492,748 772,1049 836,1024 860,1049 C 881,1039 901,1025 922,1006 886,937 835,863 770,784 769,783 710,716 594,584 L 774,223 C 774,196 753,168 711,139 L 727,119 C 717,90 699,76 672,76 641,76 570,178 457,381 L 164,-76 C 142,-110 111,-127 72,-127 30,-127 9,-110 8,-76 1,-67 -2,-52 -2,-32 -2,-23 -1,-13 0,-2 Z"/>
+  </g>
+  <g id="bullet-char-template(10004)" transform="scale(0.00048828125,-0.00048828125)">
+   <path d="M 285,-33 C 182,-33 111,30 74,156 52,228 41,333 41,471 41,549 55,616 82,672 116,743 169,778 240,778 293,778 328,747 346,684 L 369,508 C 377,444 397,411 428,410 L 1163,1116 C 1174,1127 1196,1133 1229,1133 1271,1133 1292,1118 1292,1087 L 1292,965 C 1292,929 1282,901 1262,881 L 442,47 C 390,-6 338,-33 285,-33 Z"/>
+  </g>
+  <g id="bullet-char-template(9679)" transform="scale(0.00048828125,-0.00048828125)">
+   <path d="M 813,0 C 632,0 489,54 383,161 276,268 223,411 223,592 223,773 276,916 383,1023 489,1130 632,1184 813,1184 992,1184 1136,1130 1245,1023 1353,916 1407,772 1407,592 1407,412 1353,268 1245,161 1136,54 992,0 813,0 Z"/>
+  </g>
+  <g id="bullet-char-template(8226)" transform="scale(0.00048828125,-0.00048828125)">
+   <path d="M 346,457 C 273,457 209,483 155,535 101,586 74,649 74,723 74,796 101,859 155,911 209,963 273,989 346,989 419,989 480,963 531,910 582,859 608,796 608,723 608,648 583,586 532,535 482,483 420,457 346,457 Z"/>
+  </g>
+  <g id="bullet-char-template(8211)" transform="scale(0.00048828125,-0.00048828125)">
+   <path d="M -4,459 L 1135,459 1135,606 -4,606 -4,459 Z"/>
+  </g>
+ </defs>
+ <defs class="TextEmbeddedBitmaps"/>
+ <g>
+  <g id="id2" class="Master_Slide">
+   <g id="bg-id2" class="Background"/>
+   <g id="bo-id2" class="BackgroundObjects"/>
+  </g>
+ </g>
+ <g class="SlideGroup">
+  <g>
+   <g id="id1" class="Slide" clip-path="url(#presentation_clip_path)">
+    <g class="Page">
+     <g class="com.sun.star.drawing.CustomShape">
+      <g id="id3">
+       <path fill="none" stroke="rgb(0,0,0)" d="M 5500,9900 L 3700,9900 3700,8300 7300,8300 7300,9900 5500,9900 Z"/>
+       <text class="TextShape"><tspan class="TextParagraph" font-family="Arial, sans-serif" font-size="493px" font-weight="400"><tspan class="TextPosition" x="5018" y="8994"><tspan fill="rgb(0,0,0)" stroke="none">Ліва</tspan></tspan><tspan class="TextPosition" x="4903" y="9545"><tspan fill="rgb(0,0,0)" stroke="none">подія</tspan></tspan></tspan></text>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.CustomShape">
+      <g id="id4">
+       <path fill="none" stroke="rgb(0,0,0)" d="M 5500,10400 L 3700,10400 3700,9900 7300,9900 7300,10400 5500,10400 Z"/>
+       <text class="TextShape"><tspan class="TextParagraph" font-family="Arial, sans-serif" font-size="353px" font-style="italic" font-weight="400"><tspan class="TextPosition" x="4522" y="10271"><tspan fill="rgb(0,0,0)" stroke="none">Права подія</tspan></tspan></tspan></text>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.CustomShape">
+      <g id="id5">
+       <path fill="none" stroke="rgb(0,0,0)" d="M 5500,8300 L 3700,8300 3700,7800 7300,7800 7300,8300 5500,8300 Z"/>
+       <text class="TextShape"><tspan class="TextParagraph" font-family="Arial, sans-serif" font-size="353px" font-style="italic" font-weight="400"><tspan class="TextPosition" x="4685" y="8171"><tspan fill="rgb(0,0,0)" stroke="none">Ліва подія</tspan></tspan></tspan></text>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.CustomShape">
+      <g id="id6">
+       <path fill="none" stroke="rgb(0,0,0)" d="M 10500,9900 L 8700,9900 8700,8300 12300,8300 12300,9900 10500,9900 Z"/>
+       <text class="TextShape"><tspan class="TextParagraph" font-family="Arial, sans-serif" font-size="493px" font-weight="400"><tspan class="TextPosition" x="9510" y="8994"><tspan fill="rgb(0,0,0)" stroke="none">Основна</tspan></tspan><tspan class="TextPosition" x="9903" y="9545"><tspan fill="rgb(0,0,0)" stroke="none">подія</tspan></tspan></tspan></text>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.CustomShape">
+      <g id="id7">
+       <path fill="none" stroke="rgb(0,0,0)" d="M 10500,10400 L 8700,10400 8700,9900 12300,9900 12300,10400 10500,10400 Z"/>
+       <text class="TextShape"><tspan class="TextParagraph" font-family="Arial, sans-serif" font-size="353px" font-style="italic" font-weight="400"><tspan class="TextPosition" x="9522" y="10271"><tspan fill="rgb(0,0,0)" stroke="none">Права подія</tspan></tspan></tspan></text>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.CustomShape">
+      <g id="id8">
+       <path fill="none" stroke="rgb(0,0,0)" d="M 10500,8300 L 8700,8300 8700,7800 12300,7800 12300,8300 10500,8300 Z"/>
+       <text class="TextShape"><tspan class="TextParagraph" font-family="Arial, sans-serif" font-size="353px" font-style="italic" font-weight="400"><tspan class="TextPosition" x="9685" y="8171"><tspan fill="rgb(0,0,0)" stroke="none">Ліва подія</tspan></tspan></tspan></text>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.CustomShape">
+      <g id="id9">
+       <path fill="none" stroke="rgb(0,0,0)" d="M 15500,9900 L 13700,9900 13700,8300 17300,8300 17300,9900 15500,9900 Z"/>
+       <text class="TextShape"><tspan class="TextParagraph" font-family="Arial, sans-serif" font-size="493px" font-weight="400"><tspan class="TextPosition" x="14783" y="8994"><tspan fill="rgb(0,0,0)" stroke="none">Права</tspan></tspan><tspan class="TextPosition" x="14903" y="9545"><tspan fill="rgb(0,0,0)" stroke="none">подія</tspan></tspan></tspan></text>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.CustomShape">
+      <g id="id10">
+       <path fill="none" stroke="rgb(0,0,0)" d="M 15500,10400 L 13700,10400 13700,9900 17300,9900 17300,10400 15500,10400 Z"/>
+       <text class="TextShape"><tspan class="TextParagraph" font-family="Arial, sans-serif" font-size="353px" font-style="italic" font-weight="400"><tspan class="TextPosition" x="14522" y="10271"><tspan fill="rgb(0,0,0)" stroke="none">Права подія</tspan></tspan></tspan></text>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.CustomShape">
+      <g id="id11">
+       <path fill="none" stroke="rgb(0,0,0)" d="M 15500,8300 L 13700,8300 13700,7800 17300,7800 17300,8300 15500,8300 Z"/>
+       <text class="TextShape"><tspan class="TextParagraph" font-family="Arial, sans-serif" font-size="353px" font-style="italic" font-weight="400"><tspan class="TextPosition" x="14685" y="8171"><tspan fill="rgb(0,0,0)" stroke="none">Ліва подія</tspan></tspan></tspan></text>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.ConnectorShape">
+      <g id="id12">
+       <path fill="none" stroke="rgb(0,0,0)" d="M 12300,10150 L 13356,9358"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 13700,9100 L 13250,9250 13430,9490 13700,9100 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.ConnectorShape">
+      <g id="id13">
+       <path fill="none" stroke="rgb(0,0,0)" d="M 7300,10150 L 8356,9358"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 8700,9100 L 8250,9250 8430,9490 8700,9100 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.ConnectorShape">
+      <g id="id14">
+       <path fill="none" stroke="rgb(0,0,0)" d="M 13700,8050 L 12644,8842"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 12300,9100 L 12750,8950 12570,8710 12300,9100 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.ConnectorShape">
+      <g id="id15">
+       <path fill="none" stroke="rgb(0,0,0)" d="M 8700,8050 L 7644,8842"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 7300,9100 L 7750,8950 7570,8710 7300,9100 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.CustomShape">
+      <g id="id16">
+       <path fill="none" stroke="rgb(0,0,0)" d="M 10500,5800 L 2800,5800 2800,3800 18200,3800 18200,5800 10500,5800 Z"/>
+       <text class="TextShape"><tspan class="TextParagraph" font-family="Arial, sans-serif" font-size="493px" font-weight="400"><tspan class="TextPosition" x="9097" y="4970"><tspan fill="rgb(0,0,0)" stroke="none">Решта подій</tspan></tspan></tspan></text>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.ConnectorShape">
+      <g id="id17">
+       <path fill="none" stroke="rgb(0,0,0)" d="M 17300,10150 L 18701,10150 18701,4800 18630,4800"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 18200,4800 L 18650,4950 18650,4650 18200,4800 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.LineShape">
+      <g id="id18">
+       <path fill="none" stroke="rgb(0,0,0)" d="M 17730,9100 L 17900,9100"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 17300,9100 L 17750,9250 17750,8950 17300,9100 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.LineShape">
+      <g id="id19">
+       <path fill="none" stroke="rgb(0,0,0)" d="M 17900,9100 L 17900,5800"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.LineShape">
+      <g id="id20">
+       <path fill="none" stroke="rgb(0,0,0)" d="M 3100,8100 L 3100,6230"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 3100,5800 L 2950,6250 3250,6250 3100,5800 Z"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.LineShape">
+      <g id="id21">
+       <path fill="none" stroke="rgb(0,0,0)" d="M 3700,8100 L 3100,8100"/>
+      </g>
+     </g>
+     <g class="com.sun.star.drawing.ConnectorShape">
+      <g id="id22">
+       <path fill="none" stroke="rgb(0,0,0)" d="M 2800,4800 L 2299,4800 2299,9100 3270,9100"/>
+       <path fill="rgb(0,0,0)" stroke="none" d="M 3700,9100 L 3250,8950 3250,9250 3700,9100 Z"/>
+      </g>
+     </g>
+    </g>
+   </g>
+  </g>
+ </g>
+</svg>
