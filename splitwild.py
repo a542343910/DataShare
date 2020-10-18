@@ -100,32 +100,6 @@ def extract_top(ids,ignored_words):
 	sentense_cnt={}
 
 
-	for sentense in word_ids:
-		if len(ids)/22000.1 > 1.0:
-			return
-		sentense_cnt[sentense]=len(word_ids[sentense])
-		total_cnt += len(word_ids[sentense])
-
-	sorted_sentense_cnt = sorted(sentense_cnt.items(), key = lambda kv:(kv[1], kv[0]),reverse=True) 
-
-
-	ans_words=[]
-	ans_ids=[]
-	ans_cnt = 0
-
-	for key,value in sorted_sentense_cnt:
-		#print(key,value)
-		if key in ignored_words:
-			continue
-
-		ans_words.append(key)
-		ans_ids.append(word_ids[key])
-		ans_cnt += len(word_ids[key])
-		prect = (ans_cnt*1.000000000001/total_cnt)
-		if prect > 0.80:
-			break
-		if len(ans_words) > 32:
-			break
 
 	#for i in range(0,len(ans_ids)):
 	#	print("###########" + ans_words[i])
