@@ -48,21 +48,7 @@ def cosine(i,j):
 	#print(orig_words[i])
 	#print(orig_words[j])
 
-	for word in set_words:
-		vec_i.append(len(re.findall(word,orig_words[i])))
-		vec_j.append(len(re.findall(word,orig_words[j])))
 
-	imultj = sum(map(lambda (a,b):a*b,zip(vec_i,vec_j)))
-
-	vec_i_sums = 0
-	for i in vec_i:
-		vec_i_sums = vec_i_sums + i*i
-
-	vec_j_sums = 0
-	for j in vec_j:
-		vec_j_sums = vec_j_sums + j*j
-
-	print(vec_i_sums,vec_j_sums)
 	return (imultj / ((math.sqrt(vec_i_sums) * math.sqrt(vec_j_sums))+0.00001))
 
 
